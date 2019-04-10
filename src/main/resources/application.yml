@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: Spring Tasks Application
+  h2:
+    console:
+      enabled: true
+  jackson:
+    default-property-inclusion: non_null
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MySQL;IGNORECASE=TRUE
+logging:
+  level:
+    com.mperezi: DEBUG
+custom:
+  swagger:
+    contact:
+      name:
+      email: "mperezibars@gmail.com"
+      web:
