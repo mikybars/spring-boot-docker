@@ -1,2 +1,4 @@
 *
-!build/libs/spring-*.jar
+!build/dependencies/*.jar
+!build/resources/main
+!build/classes/java/main
