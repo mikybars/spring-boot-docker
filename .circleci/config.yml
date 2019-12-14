@@ -76,6 +76,9 @@ jobs:
       - attach_workspace:
           at: build
       - run:
+          name: Check Dockerfile best practices
+          command: docker container run --rm -i hadolint/hadolint:v1 < Dockerfile
+      - run:
           name: Set image tag
           command: echo 'export IMAGE_TAG="$CIRCLE_PROJECT_USERNAME/spring-tasks-app:manual"' >> $BASH_ENV
       - run:
