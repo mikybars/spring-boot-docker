@@ -1,0 +1,103 @@
+version: 2.1
+
+commands:
+  restore_gradle:
+    description: "Restore Gradle dependencies from cache"
+    steps:
+      - restore_cache:
+          name: Restoring Gradle dependencies
+          keys:
+            - v1-dependencies-{{ checksum "build.gradle" }}
+
+  save_gradle:
+    description: "Save Gradle dependencies into cache"
+    steps:
+      - save_cache:
+          name: Saving Gradle dependencies
+          paths:
+            - ~/.gradle
+          key: v1-dependencies-{{ checksum "build.gradle" }}
+
+executors:
+  java:
+    docker:
+      - image: circleci/openjdk:8-jdk
+    environment:
+      SPRING_OUTPUT_ANSI_ENABLED: always
+      JVM_OPTS: -Xmx3200m
+      TERM: dumb
+
+jobs:
+  build:
+    executor: java
+    steps:
+      - checkout
+      - restore_gradle
+      - run: 
+          name: Compile source code
+          command: ./gradlew classes copyDependencies
+      - save_gradle
+      - persist_to_workspace:
+          root: build
+          paths:
+            - classes/
+            - dependencies/
+            - resources/
+  test:
+    executor: java
+    steps:
+      - checkout
+      - attach_workspace:
+          at: build
+      - restore_gradle
+      - run:
+          name: Run tests
+          command: |
+            ./gradlew test -x classes
+      - run:
+          name: Save test results
+          command: |
+            mkdir -p ~/test-results/junit
+            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
+          when: always
+      - store_test_results:
+          path: ~/test-results
+      - store_artifacts:
+          path: build/reports/tests/test
+          destination: test-reports
+  docker:
+    docker:
+      - image: circleci/buildpack-deps:stretch
+    environment:
+      TERM=xterm-256color
+    steps:
+      - checkout
+      - setup_remote_docker
+      - attach_workspace:
+          at: build
+      - run:
+          name: Set image tag
+          command: echo 'export IMAGE_TAG="$CIRCLE_PROJECT_USERNAME/spring-tasks-app:manual"' >> $BASH_ENV
+      - run:
+          name: Create Docker image
+          command: docker image build -t $IMAGE_TAG .
+      - run:
+          name: List local image
+          command: docker image ls -f reference="$IMAGE_TAG"
+      - run:
+          name: Push image to Docker Hub
+          command: |
+            echo $REGISTRY_PASS | docker login -u $REGISTRY_USER --password-stdin
+            docker image push $IMAGE_TAG
+
+workflows:
+  version: 2
+  build-test-and-docker:
+    jobs:
+      - build
+      - test:
+          requires:
+            - build
+      - docker:
+          requires:
+            - test
