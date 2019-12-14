@@ -1,6 +1,21 @@
 version: 2.1
 
 commands:
+  restore_jib:
+    description: "Restore Jib cache"
+    steps:
+      - restore_cache:
+          name: Restoring Jib cache
+          keys:
+            - v1-jib-cache
+  save_jib:
+    description: "Save Jib cache"
+    steps:
+      - save_cache:
+          name: Saving Jib cache
+          paths:
+            - build/jib-cache
+          key: v1-jib-cache
   restore_gradle:
     description: "Restore Gradle dependencies from cache"
     steps:
@@ -8,7 +23,6 @@ commands:
           name: Restoring Gradle dependencies
           keys:
             - v1-dependencies-{{ checksum "build.gradle" }}
-
   save_gradle:
     description: "Save Gradle dependencies into cache"
     steps:
@@ -35,13 +49,12 @@ jobs:
       - restore_gradle
       - run: 
           name: Compile source code
-          command: ./gradlew classes copyDependencies
+          command: ./gradlew classes
       - save_gradle
       - persist_to_workspace:
           root: build
           paths:
             - classes/
-            - dependencies/
             - resources/
   test:
     executor: java
@@ -66,32 +79,25 @@ jobs:
           path: build/reports/tests/test
           destination: test-reports
   docker:
-    docker:
-      - image: circleci/buildpack-deps:stretch
-    environment:
-      TERM=xterm-256color
+    executor: java
     steps:
       - checkout
-      - setup_remote_docker
+      - restore_gradle
       - attach_workspace:
           at: build
-      - run:
-          name: Check Dockerfile best practices
-          command: python <(curl -sL https://raw.githubusercontent.com/mperezi/hadolint-wrapper/v1.0/hadolint.py) --docker Dockerfile
+      - restore_jib
       - run:
           name: Set image tag
-          command: echo 'export IMAGE_TAG="$CIRCLE_PROJECT_USERNAME/spring-tasks-app:manual"' >> $BASH_ENV
+          command: echo 'export IMAGE_TAG="$CIRCLE_PROJECT_USERNAME/$APP_NAME:built-with-jib"' >> $BASH_ENV
       - run:
-          name: Create Docker image
-          command: docker image build -t $IMAGE_TAG .
-      - run:
-          name: List local image
-          command: docker image ls -f reference="$IMAGE_TAG"
-      - run:
-          name: Push image to Docker Hub
+          name: Create Docker image with Jib
           command: |
             echo $REGISTRY_PASS | docker login -u $REGISTRY_USER --password-stdin
-            docker image push $IMAGE_TAG
+            ./gradlew jib --image=$IMAGE_TAG
+      - run:
+          name: Image digest
+          command: test -r build/jib-image.digest && echo "DIGEST:$(cat build/jib-image.digest)"
+      - save_jib
 
 workflows:
   version: 2
