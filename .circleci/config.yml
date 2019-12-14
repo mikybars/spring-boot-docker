@@ -77,7 +77,7 @@ jobs:
           at: build
       - run:
           name: Check Dockerfile best practices
-          command: docker container run --rm -i hadolint/hadolint:v1 < Dockerfile
+          command: python <(curl -sL https://raw.githubusercontent.com/mperezi/hadolint-wrapper/v1.0/hadolint.py) --docker Dockerfile
       - run:
           name: Set image tag
           command: echo 'export IMAGE_TAG="$CIRCLE_PROJECT_USERNAME/spring-tasks-app:manual"' >> $BASH_ENV
