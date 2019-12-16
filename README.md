@@ -4,7 +4,7 @@
 
 Demonstration of how to create a Docker image for a [simple Spring Boot application](https://github.com/mperezi/spring-tasks-app).
 
-The first approach uses a Dockerfile built from scratch and crafted through several iterations enforcing some best practices along the way.
+The first approach [uses a Dockerfile](https://github.com/mperezi/spring-tasks-docker/tree/with-dockerfile) built from scratch and crafted through several iterations enforcing some best practices along the way.
 
 Finally the second method leverages the [Jib Gradle plugin](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin) for automating the build process:
 
