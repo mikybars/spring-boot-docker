@@ -31,7 +31,6 @@ jib {
 	container {
 		jvmFlags = ['-Xms512m', '-Xdebug', '-Xmy:flag=jib-rules']
 		environment = [SPRING_OUTPUT_ANSI_ENABLED:'always']
-		creationTime = 'USE_CURRENT_TIMESTAMP'
 		ports = ['8080']
 	}
 }
