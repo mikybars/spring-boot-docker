@@ -87,13 +87,10 @@ jobs:
           at: build
       - restore_jib
       - run:
-          name: Set image tag
-          command: echo 'export IMAGE_TAG="$CIRCLE_PROJECT_USERNAME/$APP_NAME:built-with-jib"' >> $BASH_ENV
-      - run:
           name: Create Docker image with Jib
           command: |
             echo $REGISTRY_PASS | docker login -u $REGISTRY_USER --password-stdin
-            ./gradlew jib --image=$IMAGE_TAG
+            ./gradlew jib
       - run:
           name: Image digest
           command: test -r build/jib-image.digest && echo "DIGEST:$(cat build/jib-image.digest)"

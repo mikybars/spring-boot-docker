@@ -7,7 +7,7 @@ plugins {
 apply plugin: 'io.spring.dependency-management'
 
 group = 'com.mperezi'
-version = '0.0.1-SNAPSHOT'
+version = '0.1.0'
 sourceCompatibility = '1.8'
 
 configurations {
@@ -18,6 +18,22 @@ configurations {
 
 repositories {
 	mavenCentral()
+}
+
+jib {
+	from {
+		image = 'openjdk:8-jre-alpine'
+	}
+	to {
+		image = "mperezi/spring-tasks-app:${project.version}-jib"
+		tags = ['latest']
+	}
+	container {
+		jvmFlags = ['-Xms512m', '-Xdebug', '-Xmy:flag=jib-rules']
+		environment = [SPRING_OUTPUT_ANSI_ENABLED:'always']
+		creationTime = 'USE_CURRENT_TIMESTAMP'
+		ports = ['8080']
+	}
 }
 
 dependencies {
